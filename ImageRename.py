@@ -4,19 +4,22 @@ from tkinter import Tk, Button, Label, filedialog
 from PIL import Image
 from PIL.ExifTags import TAGS
 
-def get_date_taken(path):
+def get_creation_date(path):
     try:
         image = Image.open(path)
         exif = image._getexif()
-        for tag, value in exif.items():
-            tag_name = TAGS.get(tag, tag)
-            if tag_name == 'DateTimeOriginal':
-                return datetime.strptime(value, "%Y:%m:%d %H:%M:%S")
+        if exif is not None:
+            for tag, value in exif.items():
+                tag_name = TAGS.get(tag, tag)
+                if tag_name == 'DateTimeOriginal':
+                    return datetime.strptime(value, "%Y:%m:%d %H:%M:%S")
+                elif tag_name == 'CreateDate':
+                    return datetime.strptime(value, "%Y:%m:%d %H:%M:%S")
     except (AttributeError, KeyError, IndexError, ValueError):
         pass
     return None
 
-def rename_images_by_date(directory):
+def rename_images_by_creation_date(directory):
     files = os.listdir(directory)
     total_files = len(files)
     progress_label.config(text=f"Progress: 0/{total_files}")
@@ -24,21 +27,25 @@ def rename_images_by_date(directory):
     for idx, filename in enumerate(files, 1):
         if filename.endswith(('.jpg', '.jpeg', '.png', '.gif')):
             file_path = os.path.join(directory, filename)
-            date_taken = get_date_taken(file_path)
-            if date_taken:
-                new_name = date_taken.strftime("%Y-%m-%d_%H-%M-%S") + os.path.splitext(filename)[1]
+            creation_date = get_creation_date(file_path)
+            if creation_date:
+                new_name = creation_date.strftime("%Y-%m-%d_%H-%M-%S") + os.path.splitext(filename)[1]
                 os.rename(file_path, os.path.join(directory, new_name))
                 progress_label.config(text=f"Progress: {idx}/{total_files}")
                 print(f"Renamed {filename} to {new_name}")
             else:
-                print(f"No date information found for {filename}")
+                file_modify_date = datetime.fromtimestamp(os.path.getmtime(file_path))
+                new_name = file_modify_date.strftime("%Y-%m-%d_%H-%M-%S") + os.path.splitext(filename)[1]
+                os.rename(file_path, os.path.join(directory, new_name))
+                progress_label.config(text=f"Progress: {idx}/{total_files}")
+                print(f"Renamed {filename} to {new_name}")
     progress_label.config(text=f"Progress: {total_files}/{total_files}")
 
 def select_directory():
     directory = filedialog.askdirectory()
     if directory:
         directory_label.config(text=f"Selected Directory: {directory}")
-        rename_images_by_date(directory)
+        rename_images_by_creation_date(directory)
 
 # Tkinter setup
 root = Tk()
