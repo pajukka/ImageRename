@@ -1,3 +1,9 @@
+#PLEASE READ BELOW!
+
+#THIS CODE IS INCOMPLETE AND HAS FAULTS.
+#CODE IS FREE TO USE BUT NEEDS SOME FIXING
+#I DO NOT GIVE SUPPORT
+
 import os
 from datetime import datetime
 from tkinter import Tk, Button, Label, filedialog
